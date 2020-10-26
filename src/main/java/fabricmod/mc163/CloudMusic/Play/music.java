@@ -102,10 +102,13 @@ public class music {
 
         } catch (UnsupportedAudioFileException e) {
             source.sendFeedback(new LiteralText("music163:该为vip歌曲自动跳过 请填写有vip的用户cookie以播放"), true);
+            e.printStackTrace();
         } catch (IOException e){
             source.sendFeedback(new LiteralText("music163:未知错误数据写入失败"), true);
+            e.printStackTrace();
         } catch (Exception e){
             source.sendFeedback(new LiteralText("music163:未知错误创建play对象失败"), true);
+            e.printStackTrace();
         }
     }
 
@@ -128,7 +131,7 @@ public class music {
         } catch (Http.MusicRowException e) {
             e.printStackTrace();
         }
-        return Http.download(path,musicID,downloadPath);
+        return Http.download(path,musicData[5],downloadPath);
     }
 
     public int volumeUp (int Volume){
