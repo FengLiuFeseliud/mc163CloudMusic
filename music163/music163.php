@@ -1,27 +1,5 @@
 <?php 
 
-
-function music_login($login,$id,$pass){
-	
-	if($login =="email"){
-		$http = curl_init();
-		curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/login?email=$id&password=$pass");
-		curl_setopt($http, CURLOPT_RETURNTRANSFER, true);
-		    curl_setopt($ch, CURLOPT_POST,1);
-		
-		$data =json_decode(curl_exec($http));
-		print_r($data);
-	}
-	if($login =="phone"){
-		$http = curl_init();
-		curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/login/cellphone?phone=$id&password=$pass");
-		curl_setopt($http, CURLOPT_RETURNTRANSFER, true);
-
-		$data=json_decode(curl_exec($http));
-		print_r($data);
-	}
-}
-
 function music_login_status($cookie){
 	$http = curl_init();
 	curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/recommend/songs");
