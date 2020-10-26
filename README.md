@@ -8,6 +8,9 @@ https://binaryify.github.io/NeteaseCloudMusicApi/#/
 https://github.com/Binaryify/NeteaseCloudMusicApi
 #### Fabric官网
 https://fabricmc.net/
+#### 本mod发布网址
+[1.16.3-1.16][mc163CloudMusic][开源]在mc中内置一个网易云音乐客户端!  
+https://www.mcbbs.net/thread-1130597-1-1.html
 ****
 ## V1.0.0
 #### 此版本为预览版 可能有各种bug
