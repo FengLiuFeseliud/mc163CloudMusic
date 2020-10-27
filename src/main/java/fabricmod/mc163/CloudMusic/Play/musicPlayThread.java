@@ -5,6 +5,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import java.util.Objects;
 
 public class musicPlayThread implements Runnable{
+    private boolean SinglePlay;
     private boolean onplay = true;
     private int ListRow;
     private String type;
@@ -12,12 +13,13 @@ public class musicPlayThread implements Runnable{
     private music music;
     private int musicRow;
 
-    public musicPlayThread(String type,int volume,int musicRow,String path,String downloadPath,String[] musicIDList,String musicListID,String[] musicReasonList,ServerCommandSource source,String Cookie){
+    public musicPlayThread(boolean SinglePlay,String type,int volume,int musicRow,String path,String downloadPath,String[] musicIDList,String musicListID,String[] musicReasonList,ServerCommandSource source,String Cookie){
         this.type = type;
         this.Cookie = Cookie;
         this.musicRow = musicRow;
+        this.SinglePlay = SinglePlay;
         music = new music(type,volume, musicRow,path,downloadPath,musicReasonList,musicIDList,musicListID,source);
-        if(!Objects.equals(type, "musicFMPlay" ) && type != null){
+        if(!Objects.equals(type, "musicFMPlay" ) && !SinglePlay){
             this.ListRow = musicIDList.length;
         } else if (Objects.equals(type, "musicFMPlay")){
             this.ListRow = 3;
@@ -27,14 +29,9 @@ public class musicPlayThread implements Runnable{
 
     @Override
     public void run(){
-        if (type == null){
-            int musicRow = this.musicRow;
-        }else {
-            int musicRow = 1;
-        }
         while (onplay){
             music.Play(musicRow);
-            if (type != null && musicRow <= ListRow){
+            if (!SinglePlay && musicRow <= ListRow){
                 musicRow++;
                 if(Objects.equals(this.type, "musicFMPlay" ) && musicRow < 4){
                     musicRow = 1;

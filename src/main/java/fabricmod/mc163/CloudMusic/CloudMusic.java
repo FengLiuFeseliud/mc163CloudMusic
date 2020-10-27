@@ -100,14 +100,13 @@ public class CloudMusic implements ModInitializer {
 					.then(CommandManager.argument("musicRow",IntegerArgumentType.integer())
 							.executes( musicCommand -> {
 								String[] musicData = null;
-								type = null;
 								ServerCommandSource source = musicCommand.getSource();
 								//获取输入的id
 								int musicRow = IntegerArgumentType.getInteger(musicCommand, "musicRow");
 								//连接API
 								source.sendFeedback(new LiteralText("music163:获取id->" + musicListID + "歌曲的第" + musicRow + "首单曲中"), true);
 								try {
-									musicData = Http.GetMusic(musicRow,musicIDList);
+									musicData = Http.GetMusic(type,musicRow,musicIDList);
 								} catch (Http.MusicRowException e) {
 									ERROR.E402(source);
 								}
@@ -183,10 +182,10 @@ public class CloudMusic implements ModInitializer {
 							.executes( musicCommand ->{
 								ThreadStatus();
 								ServerCommandSource source = musicCommand.getSource();
-								this.type = null;
+								boolean SinglePlay = true;
 								//获取输入的id
 								int musicRow = IntegerArgumentType.getInteger(musicCommand, "musicRow");
-								this.musicPlayThread = new musicPlayThread(type,volume,musicRow,Path,downloadPath,musicIDList,musicListID,musicReasonList,source,CookieData);
+								this.musicPlayThread = new musicPlayThread(SinglePlay,type,volume,musicRow,Path,downloadPath,musicIDList,musicListID,musicReasonList,source,CookieData);
 								this.Thread = new Thread(this.musicPlayThread);
 								Thread.start();
 
@@ -199,12 +198,13 @@ public class CloudMusic implements ModInitializer {
 			M163.then(Play.then(CommandManager.literal("musiclist")
 					.executes( musicCommand ->{
 						ThreadStatus();
+						boolean SinglePlay = false;
 						if (!(Objects.equals(this.type, "dailymusicListPlay") || Objects.equals(this.type, "SimilarMusic"))){
 							this.type = "musicListPlay";
 						}
 						ServerCommandSource source = musicCommand.getSource();
 						source.sendFeedback(new LiteralText("music163:开始播放歌单"), true);
-						this.musicPlayThread = new musicPlayThread(type,volume,1,Path,downloadPath,musicIDList,musicListID,musicReasonList,source,CookieData);
+						this.musicPlayThread = new musicPlayThread(SinglePlay,type,volume,1,Path,downloadPath,musicIDList,musicListID,musicReasonList,source,CookieData);
 						this.Thread = new Thread(this.musicPlayThread);
 						Thread.start();
 
@@ -216,11 +216,12 @@ public class CloudMusic implements ModInitializer {
 			M163.then(Play.then(CommandManager.literal("personalFM")
 					.executes( musicCommand ->{
 						ThreadStatus();
+						boolean SinglePlay = false;
 						this.type = "musicFMPlay";
 						ServerCommandSource source = musicCommand.getSource();
 						source.sendFeedback(new LiteralText("music163:已进入私人FM模式~"), true);
 
-						this.musicPlayThread = new musicPlayThread(type,volume,1,Path,downloadPath,musicIDList,musicListID,musicReasonList,source,CookieData);
+						this.musicPlayThread = new musicPlayThread(SinglePlay,type,volume,1,Path,downloadPath,musicIDList,musicListID,musicReasonList,source,CookieData);
 						this.Thread = new Thread(this.musicPlayThread);
 						Thread.start();
 

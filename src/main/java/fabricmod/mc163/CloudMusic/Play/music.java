@@ -34,8 +34,14 @@ public class music {
         this.source = source;
         this.type = type;
         this.musicReasonList = musicReasonList;
-        this.musicIDList = musicIDList;
         this.musicListID = musicListID;
+        if (Objects.equals(type, "CachePlay")){
+            //加载缓存文件
+            source.sendFeedback(new LiteralText("music163:加载缓存文件 加载时长取决于文件量"), true);
+            this.musicIDList = Cache.CacheLoad(downloadPath);
+        } else {
+            this.musicIDList = musicIDList;
+        }
     }
 
     public void Play(int musicRow){
@@ -44,7 +50,10 @@ public class music {
         try {
             CachePath = GetPlayData(musicRow);
         } catch (ERROR.VolumeException e) {
-            ERROR.E103(this.source);
+            ERROR.E103(source);
+            return;
+        } catch (Http.MusicRowException e){
+            ERROR.E402(source);
             return;
         }
         try {
@@ -112,26 +121,23 @@ public class music {
         }
     }
 
-    public String GetPlayData(int musicRow) throws ERROR.VolumeException {
+    public String GetPlayData(int musicRow) throws ERROR.VolumeException,Http.MusicRowException {
         if(this.volume == 1000){
             throw new ERROR.VolumeException();
         }
-
-        try {
-            this.musicData = Http.GetMusic(musicRow,musicIDList);
-            if (type == null || Objects.equals(type, "musicListPlay")){
-                Text.printMusicData(source,musicRow,musicData,musicListID);
-            } else if (Objects.equals(type, "musicFMPlay")){
-                Text.printMusicFMData(type,musicRow,source,musicData);
-            } else if(Objects.equals(type, "dailymusicListPlay")){
-                Text.printDailyMusicData(source,musicRow,musicData,musicReasonList);
-            } else if (Objects.equals(type, "SimilarMusic")){
-                Text.printMusicFMData(type,musicRow,source,musicData);
-            }
-        } catch (Http.MusicRowException e) {
-            e.printStackTrace();
+        this.musicData = Http.GetMusic(this.type,musicRow,musicIDList);
+        this.musicID = musicData[5];
+        this.musictit = this.musicData[0]+" "+this.musicData[1];
+        if (type == null || Objects.equals(type, "musicListPlay")){
+            Text.printMusicData(source,musicRow,musicData,musicListID);
+        } else if (Objects.equals(type, "musicFMPlay")){
+            Text.printMusicFMData(type,musicRow,source,musicData);
+        } else if(Objects.equals(type, "dailymusicListPlay")){
+            Text.printDailyMusicData(source,musicRow,musicData,musicReasonList);
+        } else if (Objects.equals(type, "SimilarMusic")){
+            Text.printMusicFMData(type,musicRow,source,musicData);
         }
-        return Http.download(path,musicData[5],downloadPath);
+        return Http.download(path,musicID,downloadPath);
     }
 
     public int volumeUp (int Volume){
@@ -178,9 +184,9 @@ public class music {
 
     public void like(String Cookie){
         if(this.musicID != null && Cookie != null){
-            String code = Http.like(this.musicData[5],Cookie);
+            String code = Http.like(this.musicID,Cookie);
             if (Objects.equals(code, "200")){
-                source.sendFeedback(new LiteralText("music163:喜欢了单曲"+this.musicData[0]+" "+this.musicData[1]), true);
+                source.sendFeedback(new LiteralText("music163:喜欢了单曲"+this.musictit), true);
             } else {
                 ERROR.E405(source);
             }
@@ -194,12 +200,12 @@ public class music {
     }
 
     public void AddMusic(String musicListID,String musicListTit,String cookie){
-        String[] AddMusicData = Http.AddMusic(this.musicData[5],musicListID,cookie);
+        String[] AddMusicData = Http.AddMusic(this.musicID,musicListID,cookie);
         if (Objects.equals(AddMusicData[0], "200")){
-            source.sendFeedback(new LiteralText("music163:向"+musicListTit+"收藏了单曲"+this.musicData[0]+" "+this.musicData[1]), true);
+            source.sendFeedback(new LiteralText("music163:向"+musicListTit+"收藏了单曲"+this.musictit), true);
             source.sendFeedback(new LiteralText("music163:"+musicListTit+"目前单曲数"+AddMusicData[1]), true);
         }else if(Objects.equals(AddMusicData[0], "502")){
-            source.sendFeedback(new LiteralText("music163:歌单"+musicListTit+"已存在单曲"+this.musicData[0]+" "+this.musicData[1]+""), true);
+            source.sendFeedback(new LiteralText("music163:歌单"+musicListTit+"已存在单曲"+musictit), true);
         }
     }
 

@@ -57,9 +57,12 @@ public class Http{
         return Cookie;
     }
 
-    public static String[] GetMusic(int musicRow,String[] musicIDList) throws MusicRowException {
-        if ( musicRow-1 < 0 || musicRow > musicIDList.length+1){
+    public static String[] GetMusic(String  type,int musicRow,String[] musicIDList) throws MusicRowException {
+        if ( musicRow-1 < 0 || musicRow > musicIDList.length){
             throw new MusicRowException("musicRow不能小于0或大于歌单单曲数");
+        }
+        if (Objects.equals(type, "CachePlay")){
+
         }
         String path = "https://api.feseliud.com/music163/getmusic.php";
         String JsonData = HttpAPIPOST(path,"id=" + musicIDList[musicRow-1]);
@@ -134,12 +137,22 @@ public class Http{
         File file = null;
         String path=null;
         try {
+            // 文件名
+            String fileFullName = musicID + ".mp3";
+            path = downloadDir + "\\" + fileFullName;
+            file = new File(path);
+            if (!file.getParentFile().exists()) {
+                file.getParentFile().mkdirs();
+            } else if (file.exists()){
+                return path;
+            }
             // 统一资源
             URL url = new URL(Path + musicID + ".mp3");
             URLConnection urlConnection = url.openConnection();
             HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
             // 设定请求的方法
-            httpURLConnection.setRequestMethod("POST");
+            httpURLConnection.setInstanceFollowRedirects(true);
+            httpURLConnection.setRequestMethod("GET");
             // 设置字符编码
             httpURLConnection.setRequestProperty("Charset", "UTF-8");
             // 打开到此 URL 引用的资源的通信链接
@@ -147,19 +160,10 @@ public class Http{
 
             // 文件大小
             int fileLength = httpURLConnection.getContentLength();
-            // 文件名
-            String fileFullName = musicID + ".mp3";
-
             URLConnection con = url.openConnection();
 
             BufferedInputStream bin = new BufferedInputStream(httpURLConnection.getInputStream());
 
-            path = downloadDir + "\\" + fileFullName;
-
-            file = new File(path);
-            if (!file.getParentFile().exists()) {
-                file.getParentFile().mkdirs();
-            }
             OutputStream out = new FileOutputStream(file);
             int size = 0;
             int len = 0;
@@ -168,6 +172,7 @@ public class Http{
                 len += size;
                 out.write(buf, 0, size);
             }
+
             bin.close();
             out.close();
         } catch (MalformedURLException e) {
