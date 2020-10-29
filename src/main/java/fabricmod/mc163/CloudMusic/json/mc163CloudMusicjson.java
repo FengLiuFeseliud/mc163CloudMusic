@@ -11,8 +11,8 @@ import java.io.*;
 public class mc163CloudMusicjson {
 
     public static class JsonData{
-        public String downloadPath; //默认缓存路径
         public int volume; //默认音量
+        public Cache Cache; //缓存相关
         public Cookie Cookie; //Cookie
         public MusicList MusicList;//需要收藏歌的歌单
     }
@@ -27,12 +27,16 @@ public class mc163CloudMusicjson {
         public String id; //歌单id
     }
 
+    public static class Cache{
+        public String downloadPath; //默认缓存路径
+        public String CacheSize; //缓存大小
+    }
+
     public static String jsonFormat(String JSONString){
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonParser JsonParser = new JsonParser();
         JsonElement JsonElement = JsonParser.parse(JSONString);
-        String prettyJsonString = gson.toJson(JsonElement);
-        return prettyJsonString;
+        return gson.toJson(JsonElement);
     }
 
     public static void Set() throws IOException {
@@ -54,12 +58,16 @@ public class mc163CloudMusicjson {
             MusicList MusicList = new MusicList();
             MusicList.title = "";
             MusicList.id = "";
+            //Cache
+            Cache Cache = new Cache();
+            Cache.downloadPath = downloadPath;
+            Cache.CacheSize = "1";
             //创建json
             JsonData JsonData = new JsonData();
             JsonData.volume =-33;
-            JsonData.downloadPath =downloadPath;
             JsonData.Cookie = Cookie;
             JsonData.MusicList = MusicList;
+            JsonData.Cache = Cache;
             //格式化json字符串
             String jsonString = jsonFormat(gson.toJson(JsonData));
 

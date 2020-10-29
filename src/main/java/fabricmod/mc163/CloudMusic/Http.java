@@ -1,6 +1,7 @@
 package fabricmod.mc163.CloudMusic;
 
 import com.google.gson.Gson;
+import fabricmod.mc163.CloudMusic.Play.Cache;
 import fabricmod.mc163.CloudMusic.json.*;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
@@ -133,7 +134,7 @@ public class Http{
         return  musicListData;
     }
 
-    public static String download(String Path, String musicID,String downloadDir) {
+    public static String download(String Path, String musicID, String downloadDir, Cache cache) {
         File file = null;
         String path=null;
         try {
@@ -181,10 +182,9 @@ public class Http{
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-        } finally {
-            return path;
         }
-
+        cache.AddCache(new File(path).length());
+        return path;
     }
 
     public static String like(String musicID,String cookie) {
@@ -214,6 +214,15 @@ public class Http{
         AddMusicData[0] = json.getCode();
         AddMusicData[1] = json.getCount();
         return AddMusicData;
+    }
+
+    public static String[] FmTrash(String musicID,String cookie) {
+        String[] FmTrashData = {"",""};
+        Gson gson = new Gson();
+        AddMusic json = gson.fromJson(HttpAPIPOST("https://api.feseliud.com/music163/fm_trash.php","id="+musicID+"&cookie="+cookie), AddMusic.class);
+        FmTrashData[0] = json.getCode();
+        FmTrashData[1] = json.getCount();
+        return FmTrashData;
     }
 
 

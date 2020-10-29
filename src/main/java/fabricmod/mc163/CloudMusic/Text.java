@@ -123,6 +123,7 @@ public class Text{
                 "[/m163 play musiclist] 播放当前歌单," +
                 "[/m163 play personalFM] 播放私人FM," +
                 "[/m163 play stop] 停止播放," +
+                "[/m163 play next] 下一首," +
                 "[/m163 play volumeUp [音量] ] 提升播放音量 一次最高提升6," +
                 "[/m163 play volumeDown [音量] ] 降低播放音量 一次最高降低6," +
                 "使用[/m163 help json] 获取如何设置Cookie," +
@@ -145,9 +146,11 @@ public class Text{
         String Data ="music163:如何配置mc163CloudMusic.json?," +
                 "-----------------------------------," +
                 "配置前须知-> 所有数据必须用英文双引号包裹 除了有特别说明的," +
+                "配置前须知-> 旧版本请删除配置文件重新生成!!!," +
                 "配置前须知-> 玩坏了可以删除了重启游戏生成," +
                 "配置前须知-> 可以开着游戏配置 配置完了使用[/m163 -c]重载," +
                 "downloadPath为当前缓存路径 将指定的缓存路径替换当前缓存路径就行," +
+                "CacheSize为缓存大小 最大20GB 最小1GB 配置时不能加上小数和GB!!!," +
                 "volume为默认音量每次重启都会设置为该值 该值为int不能使用双引号包裹,"+
                 "CookieData为你网易云音乐用户Cookie," +
                 "如何知道我的Cookie? 登录网页端(wed)的网易云音乐," +
@@ -174,4 +177,13 @@ public class Text{
         printData(Data,source);
     }
 
+    public static void HelpCache(ServerCommandSource source) {
+        String Data ="music163:Cache节点的帮助信息," +
+                "-----------------------------------," +
+                "[/m163 cache lookcache] 查看缓存占用," +
+                "[/m163 cache looksets] 查看缓存设置," +
+                "[/m163 cache cachedelete] 清空缓存文件," +
+                "-----------------------------------";
+        printData(Data,source);
+    }
 }

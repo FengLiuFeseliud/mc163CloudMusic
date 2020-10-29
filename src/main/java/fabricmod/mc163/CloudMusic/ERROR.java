@@ -57,7 +57,7 @@ public class ERROR {
 
     public static void E404(ServerCommandSource source){
         String ErrMsg="music163:没有该指令," +
-                "使用[/m163 help -]获取帮助信息";
+                "使用[/m163 help]获取帮助信息";
         printError(ErrMsg,source);
     }
 
@@ -71,6 +71,13 @@ public class ERROR {
     public static void E406(ServerCommandSource source){
         String ErrMsg="music163:addMusicListRow填写不正确," +
                 "使用[/m163 help add]获取add子节点的帮助信息";
+        printError(ErrMsg,source);
+    }
+
+    public static void E407(ServerCommandSource source){
+        String ErrMsg="music163:CacheSize填写不正确," +
+                "CacheSize不能小于0 大于20," +
+                "使用[/m163 help json]获取json的帮助信息";
         printError(ErrMsg,source);
     }
 
@@ -90,6 +97,12 @@ public class ERROR {
     public static class VolumeException extends Exception {
         public VolumeException() {
             super("音量未被正常配置");
+        }
+    }
+
+    public static class CacheSizeException extends Exception {
+        public CacheSizeException() {
+            super("CacheSize未被正常配置");
         }
     }
 

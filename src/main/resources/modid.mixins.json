@@ -4,6 +4,7 @@
   "package": "fabricmod.mc163.CloudMusic.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+
   ],
   "client": [
     "ExampleMixin"

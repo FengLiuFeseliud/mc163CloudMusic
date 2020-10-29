@@ -13,12 +13,12 @@ public class musicPlayThread implements Runnable{
     private music music;
     private int musicRow;
 
-    public musicPlayThread(boolean SinglePlay,String type,int volume,int musicRow,String path,String downloadPath,String[] musicIDList,String musicListID,String[] musicReasonList,ServerCommandSource source,String Cookie){
+    public musicPlayThread(boolean SinglePlay,String type,int volume,int musicRow,String path,Cache cache,String[] musicIDList,String musicListID,String[] musicReasonList,ServerCommandSource source,String Cookie){
         this.type = type;
         this.Cookie = Cookie;
         this.musicRow = musicRow;
         this.SinglePlay = SinglePlay;
-        music = new music(type,volume, musicRow,path,downloadPath,musicReasonList,musicIDList,musicListID,source);
+        music = new music(type,volume, musicRow,path,cache,musicReasonList,musicIDList,musicListID,source);
         if(!Objects.equals(type, "musicFMPlay" ) && !SinglePlay){
             this.ListRow = musicIDList.length;
         } else if (Objects.equals(type, "musicFMPlay")){
@@ -33,7 +33,7 @@ public class musicPlayThread implements Runnable{
             music.Play(musicRow);
             if (!SinglePlay && musicRow <= ListRow){
                 musicRow++;
-                if(Objects.equals(this.type, "musicFMPlay" ) && musicRow < 4){
+                if(Objects.equals(this.type, "musicFMPlay" ) && musicRow <= ListRow){
                     musicRow = 1;
                     music.SetFMData(Http.GetMusicFM(Cookie));
                 }
@@ -48,6 +48,11 @@ public class musicPlayThread implements Runnable{
         this.music.stop();
     }
 
+    public void NextSong(){
+        this.music.stop();
+    }
+
+
     public int volumeUp(int volume){
         return this.music.volumeUp(volume);
     }
@@ -59,4 +64,6 @@ public class musicPlayThread implements Runnable{
         return this.music.SimilarMusic();
     }
     public void AddMusic(String musicListID,String musicListTit){ this.music.AddMusic(musicListID,musicListTit,this.Cookie); }
+    public void FmTrash(){ this.music.FmTrash(this.Cookie); }
+
 }

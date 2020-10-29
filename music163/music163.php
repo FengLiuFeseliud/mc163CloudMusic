@@ -1,5 +1,27 @@
 <?php 
 
+
+function music_login($login,$id,$pass){
+	
+	if($login =="email"){
+		$http = curl_init();
+		curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/login?email=$id&password=$pass");
+		curl_setopt($http, CURLOPT_RETURNTRANSFER, true);
+		    curl_setopt($ch, CURLOPT_POST,1);
+		
+		$data =json_decode(curl_exec($http));
+		print_r($data);
+	}
+	if($login =="phone"){
+		$http = curl_init();
+		curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/login/cellphone?phone=$id&password=$pass");
+		curl_setopt($http, CURLOPT_RETURNTRANSFER, true);
+
+		$data=json_decode(curl_exec($http));
+		print_r($data);
+	}
+}
+
 function music_login_status($cookie){
 	$http = curl_init();
 	curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/recommend/songs");
@@ -106,7 +128,7 @@ function music_data($MusicID){
 
 function musicFM($cookie){
 	$http = curl_init();
-	curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/personal_fm");
+	curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/personal_fm?"."timestamp=".time());
 	curl_setopt($http, CURLOPT_HEADER, 0);
 	curl_setopt($http, CURLOPT_POST, 1);
 	$header = array('withCredentials: true');
@@ -128,7 +150,7 @@ function musicFM($cookie){
 
 function musiclike($cookie,$musicID){
 	$http = curl_init();
-	curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/like?id=".$musicID);
+	curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/like?id=".$musicID."&timestamp=".time());
 	curl_setopt($http, CURLOPT_HEADER, 0);
 	curl_setopt($http, CURLOPT_POST, 1);
 	$header = array('withCredentials: true');
@@ -187,7 +209,21 @@ function similarmusic($MusicID){
 
 function addmusic($cookie,$musicID,$pid){
 	$http = curl_init();
-	curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/playlist/tracks?op=add&pid=".$pid."&tracks=".$musicID);
+	curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/playlist/tracks?op=add&pid=".$pid."&tracks=".$musicID."&timestamp=".time());
+	curl_setopt($http, CURLOPT_HEADER, 0);
+	curl_setopt($http, CURLOPT_POST, 1);
+	$header = array('withCredentials: true');
+	curl_setopt($http, CURLOPT_COOKIE, $cookie);
+	curl_setopt($http, CURLOPT_HTTPHEADER, $header);
+	//curl_setopt($http, CURLOPT_RETURNTRANSFER, true);
+	
+	curl_exec($http);
+	
+}
+
+function fm_trash($cookie,$musicID){
+	$http = curl_init();
+	curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/fm_trash?id=".$musicID);
 	curl_setopt($http, CURLOPT_HEADER, 0);
 	curl_setopt($http, CURLOPT_POST, 1);
 	$header = array('withCredentials: true');

@@ -4,6 +4,7 @@ import com.google.gson.stream.MalformedJsonException;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import fabricmod.mc163.CloudMusic.Play.Cache;
 import fabricmod.mc163.CloudMusic.Play.musicPlayThread;
 import fabricmod.mc163.CloudMusic.json.mc163CloudMusic;
 import fabricmod.mc163.CloudMusic.json.mc163CloudMusicjson;
@@ -12,11 +13,8 @@ import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
-
 import java.io.*;
-
 import java.util.Objects;
-//2868768606
 
 public class CloudMusic implements ModInitializer {
 	private String musicListID; //m163 get musiclist获取的歌单id
@@ -25,28 +23,31 @@ public class CloudMusic implements ModInitializer {
 	private String[] musicReasonList; //m163 get dailymusiclist获取的日推的全部单曲推荐理由
 	private String Path = "http://music.163.com/song/media/outer/url?id=";
 	private String CookieData = null;
-	private String downloadPath = null;//文件缓存路径
 	private int volume = 1000; //音量 默认-33分
 	private String type; // 播放模式
 	private String[][] addMusicList ={{},{}};
 	private musicPlayThread musicPlayThread = null;
 	private Thread Thread;
+	private Cache cache; //文件缓存相关
 
 	//MalformedJsonException必须捕捉一发生会导致游戏崩溃
-	public void Openmc163CloudMusicjson() throws IOException, MalformedJsonException {
+	public String[] Openmc163CloudMusicjson() throws IOException, MalformedJsonException {
 		mc163CloudMusic mc163CloudMusic = mc163CloudMusicjson.get();
-		this.downloadPath = mc163CloudMusic.downloadPath;
 		this.volume = mc163CloudMusic.volume;
 		this.CookieData = mc163CloudMusic.Cookie.CookieData;
 		this.addMusicList[0] = mc163CloudMusic.MusicList.title.split(",");
 		this.addMusicList[1] = mc163CloudMusic.MusicList.id.split(",");
+		String[] Data = {"",""};
+		Data[0] = mc163CloudMusic.Cache.downloadPath;
+		Data[1] = mc163CloudMusic.Cache.CacheSize;
+		return Data;
 	}
 	//检查线程状态 存活则停止播放
 	public void ThreadStatus(){
 		if(musicPlayThread != null){
 			Thread.State state = Thread.getState();
 			if(state != java.lang.Thread.State.TERMINATED){
-				this.musicPlayThread.stop();
+				musicPlayThread.stop();
 			}
 		}
 	}
@@ -57,9 +58,12 @@ public class CloudMusic implements ModInitializer {
 			//检查配置文件是否存在 不存在则新建
 			mc163CloudMusicjson.Set();
 			//读取配置
-			Openmc163CloudMusicjson();
-			if(this.downloadPath != null){
-				System.out.println("music163:缓存路径已加载!->" + this.downloadPath);
+			String[] Data = Openmc163CloudMusicjson();
+			if(Data[0] != null){
+				System.out.println("music163:缓存路径已加载!->" + Data[0]);
+				//读取缓存占用
+				cache = new Cache(Data[0],Integer.parseInt(Data[1]));
+				cache.LookCache(null);
 			}else {
 				System.out.println("music163:缓存路径为null 请检查mc163CloudMusic.json -> downloadPath");
 			}
@@ -67,6 +71,8 @@ public class CloudMusic implements ModInitializer {
 			System.out.println("music163:mc163CloudMusic.json加载失败 请检查json格式是否正确,如果无法修复可以删除后重启mc生成,再重新配置");
 		} catch (IOException e){
 			System.out.println("music163:mc163CloudMusic.json无法打开,如果无法修复可以删除后重启mc生成,再重新配置");
+		} catch (ERROR.CacheSizeException e){
+			System.out.println("CacheSize无法被正常配置 不能大于20 小于0,如果无法修复可以删除后重启mc生成,再重新配置");
 		}
 
 		CommandRegistrationCallback.EVENT.register((dispatcher2, dedicated2) -> {
@@ -76,6 +82,7 @@ public class CloudMusic implements ModInitializer {
 			LiteralArgumentBuilder<ServerCommandSource> Set = CommandManager.literal("set");
 			LiteralArgumentBuilder<ServerCommandSource> Play = CommandManager.literal("play");
 			LiteralArgumentBuilder<ServerCommandSource> Add = CommandManager.literal("add");
+			LiteralArgumentBuilder<ServerCommandSource> Cache = CommandManager.literal("cache");
 			LiteralArgumentBuilder<ServerCommandSource> Help = CommandManager.literal("help");
 
 			//Get的子节点musiclist
@@ -185,7 +192,7 @@ public class CloudMusic implements ModInitializer {
 								boolean SinglePlay = true;
 								//获取输入的id
 								int musicRow = IntegerArgumentType.getInteger(musicCommand, "musicRow");
-								this.musicPlayThread = new musicPlayThread(SinglePlay,type,volume,musicRow,Path,downloadPath,musicIDList,musicListID,musicReasonList,source,CookieData);
+								this.musicPlayThread = new musicPlayThread(SinglePlay,type,volume,musicRow,Path,cache,musicIDList,musicListID,musicReasonList,source,CookieData);
 								this.Thread = new Thread(this.musicPlayThread);
 								Thread.start();
 
@@ -204,7 +211,7 @@ public class CloudMusic implements ModInitializer {
 						}
 						ServerCommandSource source = musicCommand.getSource();
 						source.sendFeedback(new LiteralText("music163:开始播放歌单"), true);
-						this.musicPlayThread = new musicPlayThread(SinglePlay,type,volume,1,Path,downloadPath,musicIDList,musicListID,musicReasonList,source,CookieData);
+						this.musicPlayThread = new musicPlayThread(SinglePlay,type,volume,1,Path,cache,musicIDList,musicListID,musicReasonList,source,CookieData);
 						this.Thread = new Thread(this.musicPlayThread);
 						Thread.start();
 
@@ -221,7 +228,7 @@ public class CloudMusic implements ModInitializer {
 						ServerCommandSource source = musicCommand.getSource();
 						source.sendFeedback(new LiteralText("music163:已进入私人FM模式~"), true);
 
-						this.musicPlayThread = new musicPlayThread(SinglePlay,type,volume,1,Path,downloadPath,musicIDList,musicListID,musicReasonList,source,CookieData);
+						this.musicPlayThread = new musicPlayThread(SinglePlay,type,volume,1,Path,cache,musicIDList,musicListID,musicReasonList,source,CookieData);
 						this.Thread = new Thread(this.musicPlayThread);
 						Thread.start();
 
@@ -236,6 +243,18 @@ public class CloudMusic implements ModInitializer {
 						source.sendFeedback(new LiteralText("music163:停止播放"), true);
 
 						this.musicPlayThread.stop();
+
+						return 1;
+					})
+			));
+
+			//Play的子节点next
+			M163.then(Play.then(CommandManager.literal("next")
+					.executes( musicCommand ->{
+						ServerCommandSource source = musicCommand.getSource();
+						source.sendFeedback(new LiteralText("music163:下一首"), true);
+
+						this.musicPlayThread.NextSong();
 
 						return 1;
 					})
@@ -302,6 +321,47 @@ public class CloudMusic implements ModInitializer {
 					})
 			));
 
+			//Add的子节点trash
+			M163.then(Add.then(CommandManager.literal("trash")
+					.executes( musicCommand ->{
+						ServerCommandSource source = musicCommand.getSource();
+						this.musicPlayThread.FmTrash();
+						this.musicPlayThread.NextSong();
+
+						return 1;
+					})
+			));
+
+			//Cache的子节点lookcache
+			M163.then(Cache.then(CommandManager.literal("lookcache")
+					.executes( musicCommand ->{
+						ServerCommandSource source = musicCommand.getSource();
+						cache.LookCache(source);
+
+						return 1;
+					})
+			));
+
+			//Cache的子节点looksets
+			M163.then(Cache.then(CommandManager.literal("looksets")
+					.executes( musicCommand ->{
+						ServerCommandSource source = musicCommand.getSource();
+						cache.Looksets(source);
+
+						return 1;
+					})
+			));
+
+			//Cache的子节点cachedelete
+			M163.then(Cache.then(CommandManager.literal("cachedelete")
+					.executes( musicCommand ->{
+						ServerCommandSource source = musicCommand.getSource();
+						cache.CacheDelete(source,false);
+
+						return 1;
+					})
+			));
+
 			//Help的子节点get
 			M163.then(Help.then(CommandManager.literal("get")
 					.executes( musicCommand ->{
@@ -347,6 +407,15 @@ public class CloudMusic implements ModInitializer {
 					})
 			));
 
+			//Help的子节点cache
+			M163.then(Help.then(CommandManager.literal("cache")
+					.executes( musicCommand ->{
+						ServerCommandSource source = musicCommand.getSource();
+						Text.HelpCache(source);
+						return 1;
+					})
+			));
+
 			M163.then(Help
 					.executes( musicCommand ->{
 						ServerCommandSource source = musicCommand.getSource();
@@ -367,7 +436,9 @@ public class CloudMusic implements ModInitializer {
 								return 1;
 							}else if (Objects.equals(type, "-c")){
 								//重载配置
-								Openmc163CloudMusicjson();
+								String[] Data = Openmc163CloudMusicjson();
+								cache = new Cache(Data[0],Integer.parseInt(Data[1]));
+								cache.Looksets(source);
 								source.sendFeedback(new LiteralText("music163:配置文件已重载!"), true);
 								return 1;
 							} else if (Objects.equals(type, "-v")){
@@ -388,6 +459,8 @@ public class CloudMusic implements ModInitializer {
 							ERROR.E102(source);
 						} catch (ERROR.VolumeException e){
 							ERROR.E103(source);
+						} catch (ERROR.CacheSizeException e){
+							ERROR.E407(source);
 						}
 						return 1;
 					}));

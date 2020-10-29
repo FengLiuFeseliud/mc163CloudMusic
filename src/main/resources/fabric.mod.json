@@ -3,7 +3,7 @@
   "id": "mc163cloudmusic",
   "version": "${version}",
 
-  "name": "Example Mod",
+  "name": "mc163cloudmusic",
   "description": "基于NeteaseCloudMusicApi的mc网易云播放器!",
   "authors": [
     "FengLiuFeseliud"
