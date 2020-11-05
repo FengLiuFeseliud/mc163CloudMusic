@@ -1,11 +1,14 @@
 package fabricmod.mc163.CloudMusic;
 
 import com.google.gson.stream.MalformedJsonException;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import fabricmod.mc163.CloudMusic.Play.Cache;
 import fabricmod.mc163.CloudMusic.Play.musicPlayThread;
+import fabricmod.mc163.CloudMusic.json.RecommendMusic;
 import fabricmod.mc163.CloudMusic.json.mc163CloudMusic;
 import fabricmod.mc163.CloudMusic.json.mc163CloudMusicjson;
 import net.fabricmc.api.ModInitializer;
@@ -14,6 +17,7 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import java.io.*;
+import java.util.List;
 import java.util.Objects;
 
 public class CloudMusic implements ModInitializer {
@@ -21,19 +25,23 @@ public class CloudMusic implements ModInitializer {
 	private String[] musicListData; //m163 get musiclist获取的歌单信息
 	private String[] musicIDList; //m163 get musiclist获取的歌单的全部单曲id
 	private String[] musicReasonList; //m163 get dailymusiclist获取的日推的全部单曲推荐理由
+	private List<RecommendMusic.Musiclist> RecommendMusicList;//m163 get recommendMusicList获取的推荐歌单
 	private String Path = "http://music.163.com/song/media/outer/url?id=";
-	private String CookieData = null;
+	private String CookieData = null; //cookie
 	private int volume = 1000; //音量 默认-33分
+	private int pageRow = 5; //推荐歌单/新音乐 一页的打印行数
 	private String type; // 播放模式
 	private String[][] addMusicList ={{},{}};
-	private musicPlayThread musicPlayThread = null;
-	private Thread Thread;
+	private musicPlayThread musicPlayThread = null; //播放线程Runnable接口
+	private Thread Thread; //播放线程
 	private Cache cache; //文件缓存相关
+	private boolean bool;
 
 	//MalformedJsonException必须捕捉一发生会导致游戏崩溃
 	public String[] Openmc163CloudMusicjson() throws IOException, MalformedJsonException {
 		mc163CloudMusic mc163CloudMusic = mc163CloudMusicjson.get();
 		this.volume = mc163CloudMusic.volume;
+		this.pageRow = mc163CloudMusic.pageRow;
 		this.CookieData = mc163CloudMusic.Cookie.CookieData;
 		this.addMusicList[0] = mc163CloudMusic.MusicList.title.split(",");
 		this.addMusicList[1] = mc163CloudMusic.MusicList.id.split(",");
@@ -95,7 +103,7 @@ public class CloudMusic implements ModInitializer {
 								musicListID = StringArgumentType.getString(musicCommand, "id");
 								//连接API
 								source.sendFeedback(new LiteralText("music163:获取id->" + musicListID + "歌单中"),true);
-								ListData = Http.GetMusicList(musicListID);
+								ListData = Http.GetMusicList(musicListID,CookieData);
 
 								Text.printMusicList(source, musicListID, ListData[0]);
 								return 1;
@@ -133,6 +141,77 @@ public class CloudMusic implements ModInitializer {
 					})
 			));
 
+			//Get的子节点recommend
+			M163.then(Get.then(CommandManager.literal("recommend")
+					.then(CommandManager.argument("bool",StringReader::readBoolean)
+						.executes( musicCommand -> {
+							ServerCommandSource source = musicCommand.getSource();
+							this.bool = BoolArgumentType.getBool(musicCommand,"bool");
+							RecommendMusic json = Http.Recommend_music(CookieData,bool);
+							RecommendMusicList = json.getMusiclist();
+							if (bool){
+								if (Objects.equals(json.getCode(), "0")){
+									source.sendFeedback(new LiteralText("music163:用户推荐歌单"), true);
+									Text.printListData(RecommendMusicList,source,1,pageRow);
+									source.sendFeedback(new LiteralText("music163:使用[/set [序号]]设置歌单后即可播放"), true);
+									source.sendFeedback(new LiteralText("music163:使用[/m163 get page [页码]]翻页"), true);
+									type = null;
+								}else {
+									ERROR.E405(source);
+								}
+							} else if(Objects.equals(json.getCode(), "0")) {
+								source.sendFeedback(new LiteralText("music163:推荐新音乐"), true);
+								String[] musicIDList = new String[RecommendMusicList.size()];
+								for (int i = 0;i < RecommendMusicList.size();i++){
+									musicIDList[i] = RecommendMusicList.get(i).getId();
+								}
+								Text.printListData(RecommendMusicList,source,1,pageRow);
+								source.sendFeedback(new LiteralText("music163:以设置该表 使用[/m163 play music [序号]/musiclist]即可播放"), true);
+								source.sendFeedback(new LiteralText("music163:使用[/m163 get page [页码]]翻页"), true);
+								this.musicIDList = musicIDList;
+								this.type = "recommendMusic";
+							} else {
+								ERROR.E405(source);
+							}
+							return 1;
+						}))
+			));
+
+			//Get的子节点page
+			M163.then(Get.then(CommandManager.literal("page")
+					.then(CommandManager.argument("page", IntegerArgumentType.integer())
+						.executes( musicCommand -> {
+							ServerCommandSource source = musicCommand.getSource();
+							int page = IntegerArgumentType.getInteger(musicCommand,"page");
+							Text.printListData(RecommendMusicList,source,page,pageRow);
+
+							return 1;
+						})
+			)));
+
+			//Set的子节点Row
+			M163.then(Set.then(CommandManager.argument("Row",IntegerArgumentType.integer())
+					.executes( musicCommand -> {
+						ServerCommandSource source = musicCommand.getSource();
+						String[][] musicList;
+						int Row = IntegerArgumentType.getInteger(musicCommand, "Row")-1;
+						if (!(Row < RecommendMusicList.size() && Row <= 0)){
+							source.sendFeedback(new LiteralText("不能大于最大序号 小于0"),true);
+							return 1;
+						}
+						musicListID = RecommendMusicList.get(Row).getId();
+						//连接API
+						source.sendFeedback(new LiteralText("music163:获取id->" + musicListID + "歌单中"), true);
+						musicList = Http.GetMusicList(musicListID,CookieData);
+						//从返回的数组中取出数据
+						musicIDList = musicList[1];
+						musicListData = musicList[0];
+
+						Text.printMusicList(source, musicListID, musicListData);
+						return 1;
+					})
+			));
+
 			//Set的子节点musiclist
 			M163.then(Set.then(CommandManager.literal("musiclist")
 					.then(CommandManager.argument("id",StringArgumentType.string())
@@ -143,7 +222,7 @@ public class CloudMusic implements ModInitializer {
 								musicListID = StringArgumentType.getString(musicCommand, "id");
 								//连接API
 								source.sendFeedback(new LiteralText("music163:获取id->" + musicListID + "歌单中"), true);
-								musicList = Http.GetMusicList(musicListID);
+								musicList = Http.GetMusicList(musicListID,CookieData);
 								//从返回的数组中取出数据
 								musicIDList = musicList[1];
 								musicListData = musicList[0];
@@ -206,7 +285,7 @@ public class CloudMusic implements ModInitializer {
 					.executes( musicCommand ->{
 						ThreadStatus();
 						boolean SinglePlay = false;
-						if (!(Objects.equals(this.type, "dailymusicListPlay") || Objects.equals(this.type, "SimilarMusic"))){
+						if (!(Objects.equals(this.type, "dailymusicListPlay") || Objects.equals(this.type, "SimilarMusic") || Objects.equals(this.type, "recommendMusic"))){
 							this.type = "musicListPlay";
 						}
 						ServerCommandSource source = musicCommand.getSource();

@@ -62,9 +62,7 @@ public class Http{
         if ( musicRow-1 < 0 || musicRow > musicIDList.length){
             throw new MusicRowException("musicRow不能小于0或大于歌单单曲数");
         }
-        if (Objects.equals(type, "CachePlay")){
 
-        }
         String path = "https://api.feseliud.com/music163/getmusic.php";
         String JsonData = HttpAPIPOST(path,"id=" + musicIDList[musicRow-1]);
         //解析json字符串
@@ -80,12 +78,13 @@ public class Http{
             musicData[4] = json.getPic();//单曲封面Url
             musicData[5] = musicIDList[musicRow-1];//单曲id
         }
+
         return musicData;
     }
 
-    public static String[][] GetMusicList(String musicListID){
+    public static String[][] GetMusicList(String musicListID,String Cookie){
         String path ="https://api.feseliud.com/music163/getmusiclist.php";
-        String JsonData = HttpAPIPOST(path,"id=" + musicListID);
+        String JsonData = HttpAPIPOST(path,"id=" + musicListID+"&cookie="+Cookie);
         //解析json字符串
         Gson gson = new Gson();
         MusicListJsonToMusicList json = gson.fromJson(JsonData, MusicListJsonToMusicList.class);
@@ -225,5 +224,9 @@ public class Http{
         return FmTrashData;
     }
 
+    public static RecommendMusic Recommend_music(String cookie,boolean bool){
+        Gson gson = new Gson();
+        return gson.fromJson(HttpAPIPOST("https://api.feseliud.com/music163/recommend_music.php","cookie="+cookie+"&bool="+bool),RecommendMusic.class);
+    }
 
 }

@@ -5,6 +5,7 @@ public class mc163CloudMusic {
     public MusicList MusicList;
     public Cache Cache;
     public int volume;
+    public int pageRow;
 
     public class Cookie {
         public boolean CookieRead;

@@ -1,9 +1,12 @@
 package fabricmod.mc163.CloudMusic;
 
+import fabricmod.mc163.CloudMusic.json.RecommendMusic;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 public class Text{
@@ -14,6 +17,24 @@ public class Text{
         DataList =Data.split(",");
         for (int i = 0; i< DataList.length; i++){
             source.sendFeedback(new LiteralText(DataList[i]), true);
+        }
+    }
+
+    //分页打印集合
+    public static void printListData(List<RecommendMusic.Musiclist> List, ServerCommandSource source, int page,int pageRow){
+        if (pageRow*page > List.size()){
+            source.sendFeedback(new LiteralText("music163:最大页数"+(int)Math.ceil(List.size() / pageRow)), true);
+            return;
+        } else if ( 1 > page){
+            source.sendFeedback(new LiteralText("music163:页数不能小于1!"), true);
+            return;
+        }
+        source.sendFeedback(new LiteralText("music163:当前页数"+page+" 最大页数"+(int)Math.ceil(List.size() / pageRow)), true);
+        java.util.List ID_list = new ArrayList();
+        for (int i = -pageRow+(pageRow*page); i < pageRow*page; i++){
+            RecommendMusic.Musiclist Musiclist = List.get(i);
+            source.sendFeedback(new LiteralText(i+1+". "+Musiclist.getName()+" "+Musiclist.getCopywriter()), true);
+            ID_list.add(Musiclist.getId());
         }
     }
 
@@ -78,8 +99,10 @@ public class Text{
         String Data = null;
         if (Objects.equals(type, "musicFMPlay")){
             Data ="music163:获取私人FM的下一首单曲成功!,";
-        } else {
+        } else if (Objects.equals(type, "SimilarMusic")){
             Data ="music163:获取第"+musicRow+"首相似歌曲成功!,";
+        } else {
+            Data ="music163:获取第"+musicRow+"首推荐新单曲成功!,";
         }
         Data = Data +
                 "-----------------------------------," +
@@ -98,7 +121,10 @@ public class Text{
                 "Get节点的所有指令获取的信息只打印不保存," +
                 "[/m163 get music [行数] ] 获取已设置歌单指定行的歌曲信息," +
                 "[/m163 get musiclist [id] ] 获取指定id歌单信息," +
-                "[/m163 get SimilarMusic] 获取当前播放歌曲的相似歌曲" +
+                "[/m163 get SimilarMusic] 获取当前播放歌曲的相似歌曲," +
+                "[/m163 get recommend [布尔]] 获取推荐歌单/新歌曲," +
+                "      布尔为true获取推荐歌单 false为获取新歌曲," +
+                "[/m163 get page [页数]] 翻页," +
                 "需保存获取的信息请使用Set节点的指令," +
                 "-----------------------------------";
         printData(Data,source);
@@ -107,6 +133,7 @@ public class Text{
     public static void HelpSet(ServerCommandSource source){
         String Data ="music163:Set节点的帮助信息," +
                 "-----------------------------------," +
+                "[/m163 set [序号] ] 设置当前歌单为指定序号推荐歌单," +
                 "[/m163 set dailymusiclist] 设置当前歌单为日推," +
                 "[/m163 set musiclist [id] ] 设置当前歌单为指定id歌单," +
                 "[/m163 set SimilarMusic] 设置当前歌单为当前播放歌曲的相似歌曲," +
@@ -152,7 +179,8 @@ public class Text{
                 "配置前须知-> 可以开着游戏配置 配置完了使用[/m163 -c]重载," +
                 "downloadPath为当前缓存路径 将指定的缓存路径替换当前缓存路径就行," +
                 "CacheSize为缓存大小 最大20GB 最小1GB 配置时不能加上小数和GB!!!," +
-                "volume为默认音量每次重启都会设置为该值 该值为int不能使用双引号包裹,"+
+                "volume为默认音量每次重启都会设置为该值 该值为int不能使用双引号包裹," +
+                "pageRow为推荐歌单/新音乐 一页的打印行数 最好不大于10因为推荐新音乐就10首,"+
                 "CookieData为你网易云音乐用户Cookie," +
                 "如何知道我的Cookie? 登录网页端(wed)的网易云音乐," +
                 "然后在网页端(wed)的网易云音乐 打开开发者工具(检查元素)选择Console(控制台)," +

@@ -130,11 +130,13 @@ public class music {
         this.musictit = this.musicData[0]+" "+this.musicData[1];
         if (type == null || Objects.equals(type, "musicListPlay")){
             Text.printMusicData(source,musicRow,musicData,musicListID);
-        } else if (Objects.equals(type, "musicFMPlay")){
+        } else if(Objects.equals(type, "musicFMPlay")){
             Text.printMusicFMData(type,musicRow,source,musicData);
         } else if(Objects.equals(type, "dailymusicListPlay")){
             Text.printDailyMusicData(source,musicRow,musicData,musicReasonList);
-        } else if (Objects.equals(type, "SimilarMusic")){
+        } else if(Objects.equals(type, "SimilarMusic")){
+            Text.printMusicFMData(type,musicRow,source,musicData);
+        } else if(Objects.equals(type, "recommendMusic")){
             Text.printMusicFMData(type,musicRow,source,musicData);
         }
         return Http.download(path,musicID,cache.getPath(),cache);

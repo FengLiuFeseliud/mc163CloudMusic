@@ -12,6 +12,7 @@ public class mc163CloudMusicjson {
 
     public static class JsonData{
         public int volume; //默认音量
+        public int pageRow; //推荐歌单/新音乐 一页的打印行数
         public Cache Cache; //缓存相关
         public Cookie Cookie; //Cookie
         public MusicList MusicList;//需要收藏歌的歌单
@@ -65,6 +66,7 @@ public class mc163CloudMusicjson {
             //创建json
             JsonData JsonData = new JsonData();
             JsonData.volume =-33;
+            JsonData.pageRow =5;
             JsonData.Cookie = Cookie;
             JsonData.MusicList = MusicList;
             JsonData.Cache = Cache;

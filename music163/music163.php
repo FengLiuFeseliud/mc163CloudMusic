@@ -48,11 +48,15 @@ function music_login_status($cookie){
 	return $music_id;
 }
 
-function music_idlist($MusicListID){
+function music_idlist($MusicListID, $cookie){
 	//获取歌单所有歌曲id+歌曲url
 	$http = curl_init();
 	curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/playlist/detail?id=$MusicListID");
 	curl_setopt($http, CURLOPT_HEADER, 0);
+	curl_setopt($http, CURLOPT_POST, 1);
+	$header = array('withCredentials: true');
+	curl_setopt($http, CURLOPT_COOKIE, $cookie);
+	curl_setopt($http, CURLOPT_HTTPHEADER, $header);
 	curl_setopt($http, CURLOPT_RETURNTRANSFER, true);
 	
 	$data =json_decode(curl_exec($http),true);
@@ -233,4 +237,43 @@ function fm_trash($cookie,$musicID){
 	
 	curl_exec($http);
 	
+}
+
+function recommend_music($cookie,$bool){
+	$http = curl_init();
+	curl_setopt($http, CURLOPT_HEADER, 0);
+	curl_setopt($http, CURLOPT_POST, 1);
+	$header = array('withCredentials: true');
+	curl_setopt($http, CURLOPT_COOKIE, $cookie);
+	curl_setopt($http, CURLOPT_RETURNTRANSFER, true);
+	$r_m = [];
+	if($bool == "true"){
+		curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/recommend/resource");
+		$json =json_decode(curl_exec($http),true);
+		$date = $json['recommend'];
+		for($i=0;$i < count($date);$i++){
+			$r_m['musiclist'][$i]['name'] = $date[$i]['name'];
+			$r_m['musiclist'][$i]['copywriter'] = $date[$i]['copywriter'];
+			$r_m['musiclist'][$i]['id'] = $date[$i]['id'];
+		}
+	}else{
+		curl_setopt($http, CURLOPT_URL, "http://musicapi.leanapp.cn/personalized/newsong");
+		$json =json_decode(curl_exec($http),true);
+		$date = $json['result'];
+		for($i=0;$i < count($date);$i++){
+			$r_m['musiclist'][$i]['name'] = $date[$i]['name'];
+			$r_m['musiclist'][$i]['id'] = $date[$i]['id'];
+			$r_m['musiclist'][$i]['copywriter'] = '';
+			for($e =0;$e < count($date[$i]['song']['artists']);$e++){
+				$r_m['musiclist'][$i]['copywriter'] =$r_m['musiclist'][$i]['copywriter'].$date[$i]['song']['artists'][$e]['name'];
+				//判断是不是最后一名歌手 不是加' / '
+				if($e != count($date[$i]['song']['artists']) -1){
+					$r_m['musiclist'][$i]['copywriter'] = $r_m['musiclist'][$i]['copywriter'].' / ';
+				}
+			}
+		}
+	}
+	
+	$r_m['code'] = "0";
+	return $r_m;
 }
